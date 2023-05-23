@@ -1,5 +1,10 @@
 package com.example.springdiscordbot;
 
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayer;
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
 import com.sun.java.accessibility.util.Translator;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audio.AudioSendHandler;
@@ -119,6 +124,13 @@ public class MyBotListener extends ListenerAdapter {
 //                return;
 //            }
             // Connects to the channel.
+             AudioPlayerManager manager = new DefaultAudioPlayerManager();
+             String trackUrl = "https://www.youtube.com/watch?v=rMYIu1xIthE";
+             AudioPlayer player = manager.createPlayer();
+             AudioPlayerSendHandler trackScheduler = new AudioPlayerSendHandler(player);
+             manager.loadItemOrdered(player, trackUrl, trackScheduler);
+          //  AudioSendHandler sendHandler = new AudioPlayerSendHandler(player);
+          //   audioManager.setSendingHandler(trackScheduler);
             audioManager.openAudioConnection(connectedChannel);
             // Obviously people do not notice someone/something connecting.
             channel.sendMessage("Connected to the voice channel!").queue();
