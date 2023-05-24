@@ -1,14 +1,18 @@
 package com.example.springdiscordbot;
 
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayer;
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
+import com.example.springdiscordbot.lavaplayer.PlayerManager;
+import com.sedmelluq.discord.lavaplayer.player.*;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sun.java.accessibility.util.Translator;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audio.AudioSendHandler;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.GuildVoiceState;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
@@ -97,44 +101,38 @@ public class MyBotListener extends ListenerAdapter {
 
         }
 
-
+        String trackUrl = "https://www.youtube.com/watch?v=rMYIu1xIthE";
         TextChannel  channel = event.getChannel().asTextChannel();
+
         // Checks if the command is !join.
          if(message.equals("!join")) {
-            // Checks if the bot has permissions.
-            if(!event.getGuild().getSelfMember().hasPermission(channel, Permission.VOICE_CONNECT)) {
-                // The bot does not have permission to join any voice channel. Don't forget the .queue()!
-                channel.sendMessage("I do not have permissions to join a voice channel!").queue();
-                return;
-            }
-            // Creates a variable equal to the channel that the user is in.
+             Member member = event.getMember();
+             GuildVoiceState memberVoiceState = member.getVoiceState();
+
+             if(!memberVoiceState.inAudioChannel()){
+                 channel.sendMessage("You need to be in a voice channel").queue();;
+                 return;
+             }
+
+             Member self = event.getGuild().getSelfMember();
+             GuildVoiceState selfVoiceState = self.getVoiceState();
              AudioChannelUnion  connectedChannel = event.getMember().getVoiceState().getChannel();
-             System.out.println(connectedChannel);
-            // Checks if they are in a channel -- not being in a channel means that the variable = null.
-            if(connectedChannel == null) {
-                // Don't forget to .queue()!
-                channel.sendMessage("You are not connected to a voice channel!").queue();
-                return;
-            }
-            // Gets the audio manager.
-            AudioManager audioManager = event.getGuild().getAudioManager();
-            // When somebody really needs to chill.
-//            if(audioManager.isAutoReconnect()) {
-//                channel.sendMessage("The bot is already trying to connect! Enter the chill zone!").queue();
-//                return;
-//            }
-            // Connects to the channel.
-             AudioPlayerManager manager = new DefaultAudioPlayerManager();
-             String trackUrl = "https://www.youtube.com/watch?v=rMYIu1xIthE";
-             AudioPlayer player = manager.createPlayer();
-             AudioPlayerSendHandler trackScheduler = new AudioPlayerSendHandler(player);
-             manager.loadItemOrdered(player, trackUrl, trackScheduler);
-          //  AudioSendHandler sendHandler = new AudioPlayerSendHandler(player);
-          //   audioManager.setSendingHandler(trackScheduler);
-            audioManager.openAudioConnection(connectedChannel);
-            // Obviously people do not notice someone/something connecting.
-            channel.sendMessage("Connected to the voice channel!").queue();
+
+             AudioManager audioManager = event.getGuild().getAudioManager();
+
+             if(connectedChannel != null ){
+                 System.out.println("fdsfs");
+                 audioManager.openAudioConnection(connectedChannel);
+             }else {
+                 if(selfVoiceState.getChannel() != memberVoiceState.getChannel()){
+                     channel.sendMessage("You need to be in the same channel as me").queue();
+                     return;
+                 }
+             }
+             PlayerManager playerManager = PlayerManager.get();
+             playerManager.play(event.getGuild(),trackUrl);
         } else if(message.equals("!leave")) { // Checks if the command is !leave.
+             event.getGuild().getAudioManager().closeAudioConnection();
         }
 
     }
